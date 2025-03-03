@@ -66,8 +66,14 @@ io.on('connection', (socket) => {
 const connectDB = async (retries = 5) => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/flashmail';
-    await mongoose.connect(mongoURI);
-    console.log('Connected to MongoDB');
+    await mongoose.connect(mongoURI, {
+      serverApi: {
+        version: '1',
+        strict: true,
+        deprecationErrors: true,
+      }
+    });
+    console.log('Connected to MongoDB Atlas');
   } catch (error) {
     console.error('MongoDB connection error:', error);
     if (retries > 0) {
