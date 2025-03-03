@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: flashmail-backend
+    env: node
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false # This will be set manually in Render dashboard
+      - key: EMAIL_DOMAIN
+        value: flashmail.onrender.com # Update this with your actual domain
+      - key: EMAIL_EXPIRATION_HOURS
+        value: "24"
+      - key: PORT
+        value: "3001"
+      - key: SMTP_PORT
+        value: "2525"
+    healthCheckPath: /health
+    autoDeploy: true
+
+  - type: web
+    name: flashmail-frontend
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://flashmail-backend.onrender.com # Update this with your backend URL
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-store
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
