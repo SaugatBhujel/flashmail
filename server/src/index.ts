@@ -14,7 +14,9 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://flashmail.onrender.com', 'https://www.flashmail.onrender.com']
+      : 'http://localhost:3000',
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     credentials: true,
     allowedHeaders: ['Content-Type']
@@ -23,13 +25,20 @@ const io = new Server(httpServer, {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://flashmail.onrender.com', 'https://www.flashmail.onrender.com']
+    : 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type']
 }));
 app.use(express.json());
 app.use(express.static('../client/build'));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
 
 // Routes
 app.use('/api/email', emailRoutes);
