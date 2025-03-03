@@ -2,6 +2,7 @@ import { SMTPServer } from 'smtp-server';
 import { simpleParser } from 'mailparser';
 import { EmailService } from './email.service';
 import { Server as SocketServer } from 'socket.io';
+import { SMTPRateLimiter } from '../middleware/email.middleware';
 
 export class SMTPService {
   private static instance: SMTPService;
@@ -18,6 +19,13 @@ export class SMTPService {
       onData: this.handleEmailData.bind(this),
       onMailFrom: (address, session, callback) => {
         console.log('Mail from:', address.address);
+        
+        // Check rate limit
+        const clientIp = (session as any).remoteAddress;
+        if (!SMTPRateLimiter.checkLimit(clientIp)) {
+          return callback(new Error('Rate limit exceeded. Please try again later.'));
+        }
+        
         callback();
       },
       onRcptTo: (address, session, callback) => {
@@ -45,6 +53,19 @@ export class SMTPService {
   private async handleEmailData(stream: any, session: any, callback: (err?: Error) => void) {
     try {
       const parsed = await simpleParser(stream);
+      
+      // Basic spam check
+      const spamKeywords = ['viagra', 'casino', 'lottery', 'winner', 'inheritance', 'prince'];
+      const emailContent = (parsed.text || '').toLowerCase();
+      const subject = (parsed.subject || '').toLowerCase();
+      
+      const isSpam = spamKeywords.some(keyword => 
+        emailContent.includes(keyword) || subject.includes(keyword)
+      );
+
+      if (isSpam) {
+        return callback(new Error('Potential spam detected'));
+      }
       
       // Process the email
       const emailData = {
