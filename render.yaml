@@ -24,9 +24,12 @@ services:
 
   - type: static
     name: flashmail-frontend
-    rootDir: client
-    buildCommand: npm install && npm run build
-    staticPublishPath: build
+    buildCommand: |
+      ls -la
+      pwd
+      cd /opt/render/project/src && ls -la
+      cd /opt/render/project/src/client && npm install && npm run build
+    staticPublishPath: /opt/render/project/src/client/build
     envVars:
       - key: REACT_APP_API_URL
         value: https://flashmail-backend.onrender.com
