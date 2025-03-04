@@ -33,7 +33,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type']
 }));
 app.use(express.json());
-app.use(express.static('../client/build'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -41,17 +40,13 @@ app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy',
     database: dbStatus,
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    mongoUri: process.env.MONGODB_URI ? 'configured' : 'missing'
   });
 });
 
 // Routes
 app.use('/api/email', emailRoutes);
-
-// Serve React app for any other routes
-app.get('*', (req, res) => {
-  res.sendFile('index.html', { root: '../client/build' });
-});
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
@@ -69,8 +64,9 @@ io.on('connection', (socket) => {
 
 // MongoDB connection with enhanced error handling
 const connectDB = async (retries = 5, delay = 5000) => {
+  const mongoURI = process.env.MONGODB_URI;
+  
   try {
-    const mongoURI = process.env.MONGODB_URI;
     if (!mongoURI) {
       throw new Error('MONGODB_URI environment variable is not set');
     }
@@ -84,13 +80,14 @@ const connectDB = async (retries = 5, delay = 5000) => {
         strict: true,
         deprecationErrors: true,
       },
-      connectTimeoutMS: 10000, // 10 seconds
-      socketTimeoutMS: 45000,  // 45 seconds
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      retryWrites: true,
+      w: 'majority'
     });
 
     console.log('Successfully connected to MongoDB Atlas');
     
-    // Set up error handlers for the connection
     mongoose.connection.on('error', (err) => {
       console.error('MongoDB connection error:', err);
     });
@@ -105,12 +102,16 @@ const connectDB = async (retries = 5, delay = 5000) => {
 
   } catch (error) {
     console.error('MongoDB connection error:', error);
+    console.error('MongoDB URI format:', mongoURI ? 'URI is set' : 'URI is missing');
+    
     if (retries > 0) {
       console.log(`Retrying connection in ${delay/1000} seconds... (${retries} attempts remaining)`);
       await new Promise(resolve => setTimeout(resolve, delay));
       return connectDB(retries - 1, delay);
     }
-    process.exit(1);
+    
+    // Don't exit the process, just log the error
+    console.error('Failed to connect to MongoDB after all retries');
   }
 };
 
@@ -129,6 +130,5 @@ httpServer.listen(PORT, async () => {
     console.log('SMTP server started successfully');
   } catch (error) {
     console.error('Failed to start SMTP server:', error);
-    process.exit(1);
   }
 });
