@@ -3,9 +3,11 @@ services:
     name: flashmail-backend
     env: node
     buildCommand: |
+      echo "Building backend..."
       cd server
       npm install
       npm run build
+      echo "Backend build completed"
     startCommand: cd server && npm start
     envVars:
       - key: NODE_ENV
@@ -26,13 +28,21 @@ services:
   - type: static
     name: flashmail-frontend
     buildCommand: |
+      echo "Building frontend..."
       cd client
-      npm install
-      npm run build
-    staticPublishPath: ./client/build
+      echo "Installing dependencies..."
+      npm install --legacy-peer-deps
+      echo "Running build..."
+      CI=false npm run build
+      echo "Build completed"
+      echo "Verifying build directory..."
+      ls -la build/
+    staticPublishPath: client/build
     envVars:
       - key: REACT_APP_API_URL
         value: https://flashmail-backend.onrender.com
+      - key: CI
+        value: false
     headers:
       - path: /*
         name: Cache-Control
