@@ -3,9 +3,9 @@ services:
     name: flashmail-backend
     env: node
     buildCommand: |
-      npm install --prefix server
-      npm run build --prefix server
-    startCommand: npm start --prefix server
+      npm install
+      npm run build:server
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -22,25 +22,12 @@ services:
     healthCheckPath: /health
     autoDeploy: true
 
-  - type: web
+  - type: static
     name: flashmail-frontend
-    env: static
     buildCommand: |
-      echo "Current directory:"
-      pwd
-      echo "Directory contents:"
-      ls -la
-      echo "Moving to client directory..."
-      cd /opt/render/project/src
-      ls -la
-      echo "Installing dependencies..."
-      cd client || exit 1
-      ls -la
       npm install
-      npm run build
-      mkdir -p /opt/render/project/src/public
-      cp -r build/* /opt/render/project/src/public/
-    staticPublishPath: ./public
+      npm run build:client
+    staticPublishPath: ./client/build
     envVars:
       - key: REACT_APP_API_URL
         value: https://flashmail-backend.onrender.com
