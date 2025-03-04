@@ -28,15 +28,21 @@ services:
 
   - type: static
     name: flashmail-frontend
-    env: static
     buildCommand: |
+      echo "Current directory:"
+      pwd
       echo "Installing frontend dependencies..."
       cd client
+      echo "Installing dependencies..."
       npm install --legacy-peer-deps
       echo "Building frontend..."
       DISABLE_ESLINT_PLUGIN=true CI=false npm run build
-      echo "Build completed"
-    staticPublishPath: client/build
+      echo "Build directory contents:"
+      ls -la build/
+      echo "Moving build to correct location..."
+      mkdir -p /opt/render/project/src/public
+      cp -r build/* /opt/render/project/src/public/
+    staticPublishPath: /opt/render/project/src/public
     envVars:
       - key: REACT_APP_API_URL
         value: https://flashmail-backend.onrender.com
