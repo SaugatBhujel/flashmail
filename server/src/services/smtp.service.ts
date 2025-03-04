@@ -1,8 +1,9 @@
-import { SMTPServer } from 'smtp-server';
-import { simpleParser } from 'mailparser';
+import { SMTPServer, SMTPServerAddress, SMTPServerSession } from 'smtp-server';
+import { simpleParser, ParsedMail } from 'mailparser';
 import { EmailService } from './email.service';
 import { Server as SocketServer } from 'socket.io';
 import { SMTPRateLimiter } from '../middleware/email.middleware';
+import { Stream } from 'stream';
 
 export class SMTPService {
   private static instance: SMTPService;
@@ -17,21 +18,22 @@ export class SMTPService {
       authOptional: true,
       disabledCommands: ['STARTTLS'],
       onData: this.handleEmailData.bind(this),
-      onMailFrom: (address, session, callback) => {
+      onMailFrom: (address: SMTPServerAddress, session: SMTPServerSession, callback: (err?: Error | null) => void) => {
         console.log('Mail from:', address.address);
         
         // Check rate limit
-        const clientIp = (session as any).remoteAddress;
+        const clientIp = session.remoteAddress;
         if (!SMTPRateLimiter.checkLimit(clientIp)) {
           return callback(new Error('Rate limit exceeded. Please try again later.'));
         }
         
         callback();
       },
-      onRcptTo: (address, session, callback) => {
+      onRcptTo: (address: SMTPServerAddress, session: SMTPServerSession, callback: (err?: Error | null) => void) => {
         console.log('Recipient:', address.address);
         // Check if the recipient is one of our temporary emails
-        if (!address.address.endsWith('@demo.flashmail.com')) {
+        const emailDomain = process.env.EMAIL_DOMAIN || 'demo.flashmail.com';
+        if (!address.address.endsWith(`@${emailDomain}`)) {
           return callback(new Error('Invalid recipient'));
         }
         callback();
@@ -50,9 +52,9 @@ export class SMTPService {
     this.io = io;
   }
 
-  private async handleEmailData(stream: any, session: any, callback: (err?: Error) => void) {
+  private async handleEmailData(stream: Stream, session: SMTPServerSession, callback: (err?: Error | null) => void): Promise<void> {
     try {
-      const parsed = await simpleParser(stream);
+      const parsed: ParsedMail = await simpleParser(stream);
       
       // Basic spam check
       const spamKeywords = ['viagra', 'casino', 'lottery', 'winner', 'inheritance', 'prince'];
@@ -99,7 +101,7 @@ export class SMTPService {
         resolve();
       });
 
-      this.server.on('error', (err) => {
+      this.server.on('error', (err: Error) => {
         console.error('SMTP Server error:', err);
         reject(err);
       });

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - flashmail-network
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+      - "2525:2525"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/flashmail
+      - CLIENT_URL=http://localhost
+      - EMAIL_DOMAIN=demo.flashmail.com
+      - EMAIL_EXPIRATION_HOURS=24
+    depends_on:
+      - mongodb
+    networks:
+      - flashmail-network
+
+  mongodb:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - flashmail-network
+
+networks:
+  flashmail-network:
+    driver: bridge
+
+volumes:
+  mongodb_data: 

@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Build outputs
+dist
+build
+
+# Environment files
+.env
+.env.*
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+
+# Misc
+*.log
+.DS_Store
+README.md
+docker-compose.yml
+Dockerfile 
