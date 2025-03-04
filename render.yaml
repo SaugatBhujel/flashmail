@@ -3,9 +3,10 @@ services:
     name: flashmail-backend
     env: node
     buildCommand: |
+      cd server
       npm install
-      npm run build:server
-    startCommand: npm start
+      npm run build
+    startCommand: cd server && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -25,8 +26,9 @@ services:
   - type: static
     name: flashmail-frontend
     buildCommand: |
+      cd client
       npm install
-      npm run build:client
+      npm run build
     staticPublishPath: ./client/build
     envVars:
       - key: REACT_APP_API_URL
