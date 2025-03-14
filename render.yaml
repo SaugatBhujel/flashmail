@@ -25,12 +25,8 @@ services:
         value: "2525"
     healthCheckPath: /health
     autoDeploy: true
-    # Explicitly allow SMTP port
-    ports:
-      - port: 2525
-        protocol: tcp
-      - port: 3001
-        protocol: tcp
+    # Note: Render automatically exposes the PORT environment variable
+    # SMTP port will be handled by the application internally
 
   - type: web
     name: flashmail-frontend
