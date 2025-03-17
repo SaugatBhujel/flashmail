@@ -42,10 +42,7 @@ services:
       DISABLE_ESLINT_PLUGIN=true CI=false npm run build
       echo "Build directory contents:"
       ls -la build/
-      echo "Moving build files to correct location..."
-      mkdir -p /opt/render/project/src/public
-      cp -r build/* /opt/render/project/src/public/
-    staticPublishPath: /opt/render/project/src/public
+    staticPublishPath: ./client/build
     envVars:
       - key: REACT_APP_API_URL
         value: https://flashmail-backend.onrender.com
