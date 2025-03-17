@@ -40,6 +40,8 @@ services:
       npm install --legacy-peer-deps
       echo "Building frontend..."
       DISABLE_ESLINT_PLUGIN=true CI=false npm run build
+      echo "Build directory contents:"
+      ls -la build/
     staticPublishPath: ./client/build
     envVars:
       - key: REACT_APP_API_URL
